@@ -159,7 +159,8 @@ size_t ZSTD_compressLiterals (
         return ZSTD_noCompressLiterals(dst, dstCapacity, src, srcSize);
 
     RETURN_ERROR_IF(dstCapacity < lhSize+1, dstSize_tooSmall, "not enough space for compression");
-    {   HUF_repeat repeat = prevHuf->repeatMode;
+    {   //HUF_repeat repeat = prevHuf->repeatMode;
+        HUF_repeat repeat = HUF_repeat_none;
         int const flags = 0
             | (bmi2 ? HUF_flags_bmi2 : 0)
             | (strategy < ZSTD_lazy && srcSize <= 1024 ? HUF_flags_preferRepeat : 0)
