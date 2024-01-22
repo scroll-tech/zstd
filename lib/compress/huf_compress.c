@@ -255,6 +255,17 @@ size_t HUF_writeCTable_wksp(void* dst, size_t maxDstSize,
             op[0] = (BYTE)hSize;
             return hSize+1;
     }   }
+        // would return 0 for too small size
+        if (hSize == 0) {
+            ERROR(dstSize_tooSmall);
+        }
+        else if (hSize >= 128) {
+            return ERROR(GENERIC);
+        }
+        //if ((hSize>1) & (hSize < maxSymbolValue/2)) {   /* FSE compressed */
+        op[0] = (BYTE)hSize;
+        return hSize+1;
+    }   //}
 
     /* write raw values as 4-bits (max : 15) */
     if (maxSymbolValue > (256-128)) return ERROR(GENERIC);   /* should not happen : likely means source cannot be compressed */
