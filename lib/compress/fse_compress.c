@@ -483,7 +483,7 @@ size_t FSE_normalizeCount (short* normalizedCounter, unsigned tableLog,
         U32 lowThreshold = (U32)(total >> tableLog);
 
         for (s=0; s<=maxSymbolValue; s++) {
-            if (count[s] == total) return 0;   /* rle special case */
+            //if (count[s] == total) return 0;   /* rle special case */
             if (count[s] == 0) { normalizedCounter[s]=0; continue; }
             if (count[s] <= lowThreshold) {
                 normalizedCounter[s] = lowProbCount;

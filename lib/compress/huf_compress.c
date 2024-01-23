@@ -164,9 +164,8 @@ HUF_compressWeights(void* dst, size_t dstSize,
     /* Scan input and build symbol stats */
     {   unsigned const maxCount = HIST_count_simple(wksp->count, &maxSymbolValue, weightTable, wtSize);   /* never fails */
         if (maxCount == wtSize) return 1;   /* only a single symbol in src : rle */
-        if (maxCount == 1) return 0;        /* each symbol present maximum once => not compressible */
+        //if (maxCount == 1) return 0;        /* each symbol present maximum once => not compressible */
     }
-
     tableLog = FSE_optimalTableLog(tableLog, wtSize, maxSymbolValue);
     CHECK_F( FSE_normalizeCount(wksp->norm, tableLog, wksp->count, wtSize, maxSymbolValue, /* useLowProbCount */ 0) );
 
@@ -250,31 +249,25 @@ size_t HUF_writeCTable_wksp(void* dst, size_t maxDstSize,
 
     /* attempt weights compression by FSE */
     if (maxDstSize < 1) return ERROR(dstSize_tooSmall);
-    {   CHECK_V_F(hSize, HUF_compressWeights(op+1, maxDstSize-1, wksp->huffWeight, maxSymbolValue, &wksp->wksp, sizeof(wksp->wksp)) );
-        if ((hSize>1) & (hSize < maxSymbolValue/2)) {   /* FSE compressed */
+    {CHECK_V_F(hSize, HUF_compressWeights(op+1, maxDstSize-1, wksp->huffWeight, maxSymbolValue, &wksp->wksp, sizeof(wksp->wksp)) );
+
+        if ((hSize>1) & (hSize < 128)) {   /* FSE compressed */
             op[0] = (BYTE)hSize;
             return hSize+1;
-    }   }
-        // would return 0 for too small size
-        if (hSize == 0) {
-            ERROR(dstSize_tooSmall);
-        }
-        else if (hSize >= 128) {
+        } else if (hSize <= 1){
+            return hSize;
+        } else {
+            /*should be able to compress within 127 bytes */
             return ERROR(GENERIC);
-        }
-        //if ((hSize>1) & (hSize < maxSymbolValue/2)) {   /* FSE compressed */
-        op[0] = (BYTE)hSize;
-        return hSize+1;
-    }   //}
-
-    /* write raw values as 4-bits (max : 15) */
-    if (maxSymbolValue > (256-128)) return ERROR(GENERIC);   /* should not happen : likely means source cannot be compressed */
-    if (((maxSymbolValue+1)/2) + 1 > maxDstSize) return ERROR(dstSize_tooSmall);   /* not enough space within dst buffer */
-    op[0] = (BYTE)(128 /*special case*/ + (maxSymbolValue-1));
-    wksp->huffWeight[maxSymbolValue] = 0;   /* to be sure it doesn't cause msan issue in final combination */
-    for (n=0; n<maxSymbolValue; n+=2)
-        op[(n/2)+1] = (BYTE)((wksp->huffWeight[n] << 4) + wksp->huffWeight[n+1]);
-    return ((maxSymbolValue+1)/2) + 1;
+    }   }
+    // /* write raw values as 4-bits (max : 15) */
+    // if (maxSymbolValue > (256-128)) return ERROR(GENERIC);   /* should not happen : likely means source cannot be compressed */
+    // if (((maxSymbolValue+1)/2) + 1 > maxDstSize) return ERROR(dstSize_tooSmall);   /* not enough space within dst buffer */
+    // op[0] = (BYTE)(128 /*special case*/ + (maxSymbolValue-1));
+    // wksp->huffWeight[maxSymbolValue] = 0;   /* to be sure it doesn't cause msan issue in final combination */
+    // for (n=0; n<maxSymbolValue; n+=2)
+    //     op[(n/2)+1] = (BYTE)((wksp->huffWeight[n] << 4) + wksp->huffWeight[n+1]);
+    // return ((maxSymbolValue+1)/2) + 1;
 }
 
 
@@ -1393,6 +1386,15 @@ HUF_compress_internal (void* dst, size_t dstSize,
     /* Write table description header */
     {   CHECK_V_F(hSize, HUF_writeCTable_wksp(op, dstSize, table->CTable, maxSymbolValue, huffLog,
                                               &table->wksps.writeCTable_wksp, sizeof(table->wksps.writeCTable_wksp)) );
+        if (hSize <= 1){
+            DEBUGLOG(5, "Fail fast for imcompress/RLE cases (%u)", (unsigned)hSize);
+            if (hSize == 1 && srcSize < 8){
+                /* ZSTD_compressLiterals would check allIdentical for src size >=8, fall back small size into noCompressLiterals */
+                return 0;
+            }
+            return hSize;
+        }
+
         /* Check if using previous huffman table is beneficial */
         if (repeat && *repeat != HUF_repeat_none) {
             size_t const oldSize = HUF_estimateCompressedSize(oldHufTable, table->count, maxSymbolValue);
