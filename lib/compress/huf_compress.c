@@ -143,6 +143,36 @@ typedef struct {
     S16 norm[HUF_TABLELOG_MAX+1];
 } HUF_CompressWeightsWksp;
 
+
+/* induce a dummy symbol with minimal prob to fake out some normal distribution*/
+static size_t normalizeCountForRLE (short* normalizedCounter, unsigned tableLog,
+                           const unsigned* count, size_t total,
+                           unsigned maxSymbolValue, unsigned /*useLowProbCount*/)
+{
+
+    {
+        unsigned s;
+        int dummy_ok = 0;
+        int stillToDistribute = 1<<tableLog;
+
+        for (s=0; s<=maxSymbolValue; s++) {
+            if (count[s] == total) {
+                normalizedCounter[s] = stillToDistribute - 1;
+            }else {
+                assert(count[s] == 0);
+                normalizedCounter[s]=0;
+                if (dummy_ok == 0) {
+                    dummy_ok = 1;
+                    normalizedCounter[s]=-1;
+                }
+            }
+        }
+    }
+
+    return tableLog;
+}
+
+
 static size_t
 HUF_compressWeights(void* dst, size_t dstSize,
               const void* weightTable, size_t wtSize,
@@ -155,6 +185,8 @@ HUF_compressWeights(void* dst, size_t dstSize,
     unsigned maxSymbolValue = HUF_TABLELOG_MAX;
     U32 tableLog = MAX_FSE_TABLELOG_FOR_HUFF_HEADER;
     HUF_CompressWeightsWksp* wksp = (HUF_CompressWeightsWksp*)HUF_alignUpWorkspace(workspace, &workspaceSize, ZSTD_ALIGNOF(U32));
+    typedef size_t (*normalize_count_f)(short*, unsigned, const unsigned*, size_t, unsigned, unsigned);
+    normalize_count_f normalize_count = FSE_normalizeCount;
 
     if (workspaceSize < sizeof(HUF_CompressWeightsWksp)) return ERROR(GENERIC);
 
@@ -163,11 +195,11 @@ HUF_compressWeights(void* dst, size_t dstSize,
 
     /* Scan input and build symbol stats */
     {   unsigned const maxCount = HIST_count_simple(wksp->count, &maxSymbolValue, weightTable, wtSize);   /* never fails */
-        if (maxCount == wtSize) return 1;   /* only a single symbol in src : rle */
-        //if (maxCount == 1) return 0;        /* each symbol present maximum once => not compressible */
+        if (maxCount == wtSize)normalize_count = normalizeCountForRLE;/* only a single symbol in src : rle */
+    //    if (maxCount == 1) return 0;        /* each symbol present maximum once => not compressible */
     }
     tableLog = FSE_optimalTableLog(tableLog, wtSize, maxSymbolValue);
-    CHECK_F( FSE_normalizeCount(wksp->norm, tableLog, wksp->count, wtSize, maxSymbolValue, /* useLowProbCount */ 0) );
+    CHECK_F( normalize_count(wksp->norm, tableLog, wksp->count, wtSize, maxSymbolValue, /* useLowProbCount */ 0) );
 
     /* Write table description header */
     {   CHECK_V_F(hSize, FSE_writeNCount(op, (size_t)(oend-op), wksp->norm, maxSymbolValue, tableLog) );
