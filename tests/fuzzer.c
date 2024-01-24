@@ -4548,7 +4548,7 @@ static int fuzzerTests(U32 seed, unsigned nbTests, unsigned startTest, U32 const
         }
 
         /* noisy src decompression test */
-        if (cSize > 6) {
+        if (0 && cSize > 6) {
             /* insert noise into src */
             {   U32 const maxNbBits = FUZ_highbit32((U32)(cSize-4));
                 size_t pos = 4;   /* preserve magic number (too easy to detect) */

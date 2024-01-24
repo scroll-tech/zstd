@@ -462,6 +462,7 @@ static size_t writeHufHeader(U32* seed, HUF_CElt* hufTable, void* dst, size_t ds
 
     /* Write table description header */
     {   size_t const hSize = HUF_writeCTable_wksp (op, dstSize, hufTable, maxSymbolValue, huffLog, WKSP, sizeof(WKSP));
+        if (hSize <= 1)return 0;
         if (hSize + 12 >= srcSize) return 0;   /* not useful to try compression */
         op += hSize;
     }
@@ -518,7 +519,7 @@ static size_t writeLiteralsBlockCompressed(U32* seed, frame_t* frame, size_t con
         }
 
         /* most of the time generate a new distribution */
-        if ((RAND(seed) & 3) || !frame->stats.hufInit) {
+        if (1 /*(RAND(seed) & 3) || !frame->stats.hufInit*/) {
             do {
                 if (RAND(seed) & 3) {
                     /* add 10 to ensure some compressibility */
