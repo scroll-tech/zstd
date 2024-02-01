@@ -1381,8 +1381,8 @@ HUF_compress_internal (void* dst, size_t dstSize,
 
     /* Scan input and build symbol stats */
     {   CHECK_V_F(largest, HIST_count_wksp (table->count, &maxSymbolValue, (const BYTE*)src, srcSize, table->wksps.hist_wksp, sizeof(table->wksps.hist_wksp)) );
-        if (largest == srcSize) { *ostart = ((const BYTE*)src)[0]; return 1; }   /* single symbol, rle */
-        if (largest <= (srcSize >> 7)+4) return 0;   /* heuristic : probably not compressible enough */
+        //if (largest == srcSize) { *ostart = ((const BYTE*)src)[0]; return 1; }   /* single symbol, rle */
+        //if (largest <= (srcSize >> 7)+4) return 0;   /* heuristic : probably not compressible enough */
     }
     DEBUGLOG(6, "histogram detail completed (%zu symbols)", showU32(table->count, maxSymbolValue+1));
 
@@ -1420,10 +1420,6 @@ HUF_compress_internal (void* dst, size_t dstSize,
                                               &table->wksps.writeCTable_wksp, sizeof(table->wksps.writeCTable_wksp)) );
         if (hSize == 0){
             DEBUGLOG(5, "Fail fast for imcompress/RLE cases (%u)", (unsigned)hSize);
-            if (hSize == 1 && srcSize < 8){
-                /* ZSTD_compressLiterals would check allIdentical for src size >=8, fall back small size into noCompressLiterals */
-                return 0;
-            }
             return hSize;
         }
 
@@ -1438,7 +1434,7 @@ HUF_compress_internal (void* dst, size_t dstSize,
         }   }
 
         /* Use the new huffman table */
-        if (hSize + 12ul >= srcSize) { return 0; }
+        // if (hSize + 12ul >= srcSize) { return 0; }
         op += hSize;
         if (repeat) { *repeat = HUF_repeat_none; }
         if (oldHufTable)

@@ -2877,6 +2877,10 @@ ZSTD_entropyCompressSeqStore_internal(
                                     ZSTD_literalsCompressionIsDisabled(cctxParams),
                                     suspectUncompressible, bmi2);
         FORWARD_IF_ERROR(cSize, "ZSTD_compressLiterals failed");
+        if (cSize == 0){
+            DEBUGLOG(5, "Give up compressing block if literal is not compressible (%u)", (unsigned)cSize);
+            return cSize;
+        }
         assert(cSize <= dstCapacity);
         op += cSize;
     }
