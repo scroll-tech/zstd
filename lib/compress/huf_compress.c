@@ -1420,10 +1420,6 @@ HUF_compress_internal (void* dst, size_t dstSize,
                                               &table->wksps.writeCTable_wksp, sizeof(table->wksps.writeCTable_wksp)) );
         if (hSize == 0){
             DEBUGLOG(5, "Fail fast for imcompress/RLE cases (%u)", (unsigned)hSize);
-            if (hSize == 1 && srcSize < 8){
-                /* ZSTD_compressLiterals would check allIdentical for src size >=8, fall back small size into noCompressLiterals */
-                return 0;
-            }
             return hSize;
         }
 
