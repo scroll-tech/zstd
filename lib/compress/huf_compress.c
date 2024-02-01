@@ -283,10 +283,10 @@ size_t HUF_writeCTable_wksp(void* dst, size_t maxDstSize,
     if (maxDstSize < 1) return ERROR(dstSize_tooSmall);
     {CHECK_V_F(hSize, HUF_compressWeights(op+1, maxDstSize-1, wksp->huffWeight, maxSymbolValue, &wksp->wksp, sizeof(wksp->wksp)) );
 
-        if ((hSize>1) & (hSize < 128)) {   /* FSE compressed */
+        if ((hSize>0) & (hSize < 128)) {   /* FSE compressed */
             op[0] = (BYTE)hSize;
             return hSize+1;
-        } else if (hSize <= 1){
+        } else if (hSize == 0){
             return hSize;
         } else {
             /*should be able to compress within 127 bytes */
@@ -1418,7 +1418,7 @@ HUF_compress_internal (void* dst, size_t dstSize,
     /* Write table description header */
     {   CHECK_V_F(hSize, HUF_writeCTable_wksp(op, dstSize, table->CTable, maxSymbolValue, huffLog,
                                               &table->wksps.writeCTable_wksp, sizeof(table->wksps.writeCTable_wksp)) );
-        if (hSize <= 1){
+        if (hSize == 0){
             DEBUGLOG(5, "Fail fast for imcompress/RLE cases (%u)", (unsigned)hSize);
             if (hSize == 1 && srcSize < 8){
                 /* ZSTD_compressLiterals would check allIdentical for src size >=8, fall back small size into noCompressLiterals */
