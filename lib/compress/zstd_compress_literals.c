@@ -156,7 +156,7 @@ size_t ZSTD_compressLiterals (
 
     /* if too small, don't even attempt compression (speed opt) */
     if (srcSize < ZSTD_minLiteralsToCompress(strategy, prevHuf->repeatMode))
-        return ZSTD_noCompressLiterals(dst, dstCapacity, src, srcSize);
+        return 0;//ZSTD_noCompressLiterals(dst, dstCapacity, src, srcSize);
 
     RETURN_ERROR_IF(dstCapacity < lhSize+1, dstSize_tooSmall, "not enough space for compression");
     {   //HUF_repeat repeat = prevHuf->repeatMode;
