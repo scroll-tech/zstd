@@ -2730,7 +2730,8 @@ ZSTD_buildSequencesStatistics(
     {   unsigned max = MaxLL;
         size_t const mostFrequent = HIST_countFast_wksp(countWorkspace, &max, llCodeTable, nbSeq, entropyWorkspace, entropyWkspSize);   /* can't fail */
         DEBUGLOG(5, "Building LL table");
-        nextEntropy->litlength_repeatMode = prevEntropy->litlength_repeatMode;
+        /* nextEntropy->litlength_repeatMode = prevEntropy->litlength_repeatMode; */
+        nextEntropy->litlength_repeatMode = FSE_repeat_none;
         stats.LLtype = ZSTD_selectEncodingType(&nextEntropy->litlength_repeatMode,
                                         countWorkspace, max, mostFrequent, nbSeq,
                                         LLFSELog, prevEntropy->litlengthCTable,
@@ -2763,7 +2764,8 @@ ZSTD_buildSequencesStatistics(
         /* We can only use the basic table if max <= DefaultMaxOff, otherwise the offsets are too large */
         ZSTD_defaultPolicy_e const defaultPolicy = (max <= DefaultMaxOff) ? ZSTD_defaultAllowed : ZSTD_defaultDisallowed;
         DEBUGLOG(5, "Building OF table");
-        nextEntropy->offcode_repeatMode = prevEntropy->offcode_repeatMode;
+        /* nextEntropy->offcode_repeatMode = prevEntropy->offcode_repeatMode; */
+        nextEntropy->offcode_repeatMode = FSE_repeat_none;
         stats.Offtype = ZSTD_selectEncodingType(&nextEntropy->offcode_repeatMode,
                                         countWorkspace, max, mostFrequent, nbSeq,
                                         OffFSELog, prevEntropy->offcodeCTable,
@@ -2793,7 +2795,8 @@ ZSTD_buildSequencesStatistics(
         size_t const mostFrequent = HIST_countFast_wksp(
             countWorkspace, &max, mlCodeTable, nbSeq, entropyWorkspace, entropyWkspSize);   /* can't fail */
         DEBUGLOG(5, "Building ML table (remaining space : %i)", (int)(oend-op));
-        nextEntropy->matchlength_repeatMode = prevEntropy->matchlength_repeatMode;
+        /* nextEntropy->matchlength_repeatMode = prevEntropy->matchlength_repeatMode; */
+        nextEntropy->matchlength_repeatMode = FSE_repeat_none;
         stats.MLtype = ZSTD_selectEncodingType(&nextEntropy->matchlength_repeatMode,
                                         countWorkspace, max, mostFrequent, nbSeq,
                                         MLFSELog, prevEntropy->matchlengthCTable,
