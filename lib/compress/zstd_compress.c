@@ -4868,7 +4868,8 @@ size_t ZSTD_loadCEntropy(ZSTD_compressedBlockState_t* bs, void* workspace,
                 matchlengthNCount, matchlengthMaxValue, matchlengthLog,
                 workspace, HUF_WORKSPACE_SIZE)),
             dictionary_corrupted, "");
-        bs->entropy.fse.matchlength_repeatMode = ZSTD_dictNCountRepeat(matchlengthNCount, matchlengthMaxValue, MaxML);
+        /* bs->entropy.fse.matchlength_repeatMode = ZSTD_dictNCountRepeat(matchlengthNCount, matchlengthMaxValue, MaxML) */;
+        bs->entropy.fse.matchlength_repeatMode = FSE_repeat_none;
         dictPtr += matchlengthHeaderSize;
     }
 
@@ -4882,7 +4883,8 @@ size_t ZSTD_loadCEntropy(ZSTD_compressedBlockState_t* bs, void* workspace,
                 litlengthNCount, litlengthMaxValue, litlengthLog,
                 workspace, HUF_WORKSPACE_SIZE)),
             dictionary_corrupted, "");
-        bs->entropy.fse.litlength_repeatMode = ZSTD_dictNCountRepeat(litlengthNCount, litlengthMaxValue, MaxLL);
+        /* bs->entropy.fse.litlength_repeatMode = ZSTD_dictNCountRepeat(litlengthNCount, litlengthMaxValue, MaxLL) */;
+        bs->entropy.fse.litlength_repeatMode = FSE_repeat_none;
         dictPtr += litlengthHeaderSize;
     }
 
@@ -4899,7 +4901,8 @@ size_t ZSTD_loadCEntropy(ZSTD_compressedBlockState_t* bs, void* workspace,
             offcodeMax = ZSTD_highbit32(maxOffset); /* Calculate minimum offset code required to represent maxOffset */
         }
         /* All offset values <= dictContentSize + 128 KB must be representable for a valid table */
-        bs->entropy.fse.offcode_repeatMode = ZSTD_dictNCountRepeat(offcodeNCount, offcodeMaxValue, MIN(offcodeMax, MaxOff));
+        /* bs->entropy.fse.offcode_repeatMode = ZSTD_dictNCountRepeat(offcodeNCount, offcodeMaxValue, MIN(offcodeMax, MaxOff)) */;
+        bs->entropy.fse.offcode_repeatMode = FSE_repeat_none;
 
         /* All repCodes must be <= dictContentSize and != 0 */
         {   U32 u;
