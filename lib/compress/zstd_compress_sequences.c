@@ -165,7 +165,8 @@ ZSTD_selectEncodingType(
     ZSTD_STATIC_ASSERT(ZSTD_defaultDisallowed == 0 && ZSTD_defaultAllowed != 0);
     if (mostFrequent == nbSeq) {
         *repeatMode = FSE_repeat_none;
-        if (isDefaultAllowed && nbSeq <= 2) {
+        // scroll-hack: always skip rle
+        if (isDefaultAllowed /*&& nbSeq <= 2*/) {
             /* Prefer set_basic over set_rle when there are 2 or fewer symbols,
              * since RLE uses 1 byte, but set_basic uses 5-6 bits per symbol.
              * If basic encoding isn't possible, always choose RLE.
@@ -176,6 +177,8 @@ ZSTD_selectEncodingType(
         DEBUGLOG(5, "Selected set_rle");
         return set_rle;
     }
+    // scroll-hack: do not use repeat mode
+    *repeatMode = FSE_repeat_none;
     if (strategy < ZSTD_lazy) {
         if (isDefaultAllowed) {
             size_t const staticFse_nbSeq_max = 1000;
