@@ -173,6 +173,7 @@ ZSTD_compressSubBlock_sequences(const ZSTD_fseCTables_t* fseTables,
     BYTE* const oend = ostart + dstCapacity;
     BYTE* op = ostart;
     BYTE* seqHead;
+    writeEntropy = 1;
 
     DEBUGLOG(5, "ZSTD_compressSubBlock_sequences (nbSeq=%zu, writeEntropy=%d, longOffsets=%d)", nbSeq, writeEntropy, longOffsets);
 
